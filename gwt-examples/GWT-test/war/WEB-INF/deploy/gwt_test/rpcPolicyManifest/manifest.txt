@@ -1,0 +1,3 @@
+# Module gwt_test
+# RPC service class, partial path of RPC policy file
+gwt.examples.client.GreetingService, 3C51E12105475ADC241AF9C4551678F0.gwt.rpc
