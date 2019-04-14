@@ -1,4 +1,4 @@
-package it.rbozzini.corso_java_ee_developer.concorrenza;
+package it.rbozzini.corso_java_ee_developer.thread.concorrenza;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.Callable;
 
-import it.rbozzini.corsojvaeedeveloper.utils.FileUtils;
+import it.rbozzini.corso_java_ee_developer.utils.FileUtils;
 
 public class GetSitePageExecutor implements Callable<String> {
 

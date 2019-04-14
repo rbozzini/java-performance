@@ -1,4 +1,4 @@
-package it.rbozzini.corso_java_ee_developer.concorrenza;
+package it.rbozzini.corso_java_ee_developer.thread.concorrenza;
 
 import java.util.ArrayList;
 import java.util.List;

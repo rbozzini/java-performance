@@ -1,4 +1,4 @@
-package it.rbozzini.corsojvaeedeveloper.utils;
+package it.rbozzini.corso_java_ee_developer.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

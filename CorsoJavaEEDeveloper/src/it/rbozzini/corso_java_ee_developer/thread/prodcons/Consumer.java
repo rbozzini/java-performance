@@ -1,4 +1,4 @@
-package it.rbozzini.corso_java_ee_developer.prodcons;
+package it.rbozzini.corso_java_ee_developer.thread.prodcons;
 
 import java.util.List;
 
