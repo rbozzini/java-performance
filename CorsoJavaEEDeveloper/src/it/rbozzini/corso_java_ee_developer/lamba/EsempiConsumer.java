@@ -27,7 +27,7 @@ public class EsempiConsumer {
         }; 
   
         // Consumer to display a list of numbers 
-        Consumer<List<Integer> > 
+        Consumer<List<Integer>> 
             dispList = list -> list.stream().forEach(a -> System.out.print(a + " ")); 
   
         List<Integer> list = new ArrayList<Integer>(); 
@@ -42,25 +42,39 @@ public class EsempiConsumer {
         dispList.accept(list); 
         
         /* --- Esempio 3 --- */
-        display.accept("\n--- Esempio 3 ---"); 
+        display.accept("\n\n--- Esempio 3 ---"); 
         
-        // Consumer to multiply 2 to every integer of a list 
-        Consumer<List<Integer> > modify2 = list2 -> { 
-            for (int i = 0; i < list2.size(); i++) 
-                list2.set(i, 2 * list2.get(i)); 
-        }; 
-  
-        // Consumer to display a list of integers 
-        Consumer<List<Integer> > 
-            dispList2 = list2 -> list.stream().forEach(a -> System.out.print(a + " ")); 
-  
-        List<Integer> list2 = new ArrayList<Integer>(); 
-        list.add(2); 
-        list.add(1); 
-        list.add(3); 
-  
-        // using addThen() 
-        modify.andThen(dispList2).accept(list2); 
+		// Consumer to multiply 2 to every integer of a list
+		Consumer<List<Integer>> modify2 = list2 -> {
+			for (int i = 0; i < list2.size(); i++)
+				list2.set(i, 2 * list2.get(i));
+		};
+
+		List<Integer> list2 = new ArrayList<Integer>();
+		list2.add(2);
+		list2.add(1);
+		list2.add(3);
+
+		// using addThen()
+		modify2.andThen(dispList).accept(list2); 
+		
+		/* --- Esempio 4: metodo print che riceve un consumer --- */
+		display.accept("\n\n--- Esempio 4 (stampo nome e cognome) ---"); 
+
+		EsempiConsumer ec = new EsempiConsumer();
+		List<Utente> utenti = UtentiUtils.elencoUtenti();
+		
+        Consumer<List<Utente>> printNomeCognome = elencoUtenti -> elencoUtenti.stream().forEach(utente -> System.out.println(utente.getNome() + " " + utente.getCognome()));
+		ec.print(utenti,  printNomeCognome);
+		
+		display.accept("\n\n--- Esempio 4 (stampo nome, cognome, età) ---");
+		
+		Consumer<List<Utente>> printNomeCognomeEta = elencoUtenti -> elencoUtenti.stream().forEach(utente -> System.out.println(utente.getNome() + " " + utente.getCognome() + " " + utente.getEta()));
+		ec.print(utenti,  printNomeCognomeEta);
     } 
+	
+	private void print(List<Utente> utenti, Consumer<List<Utente>> printer) {
+		printer.accept(utenti);
+	}
 
 }
