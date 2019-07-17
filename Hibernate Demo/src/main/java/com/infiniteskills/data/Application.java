@@ -1,52 +1,60 @@
 package com.infiniteskills.data;
 
+import java.util.Calendar;
 import java.util.Date;
-import java.util.Properties;
 
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
 
-import com.infiniteskills.data.entities.AccountType;
+import com.infiniteskills.data.entities.User;
 
 public class Application {
 
 	public static void main(String[] args) {
 
-		/* Configuration */
-		Configuration configuration = new Configuration();
-
-		configuration.addAnnotatedClass(AccountType.class);
-
-		configuration.setProperties(new Properties() {
-			{
-				put("hibernate.connection.username", "root");
-				put("hibernate.connection.password", "RW09xJOB3Y95");
-				put("hibernate.connection.driver_class", "com.mysql.jdbc.Driver");
-				put("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
-				put("hibernate.connection.url", "jdbc:mysql://127.0.0.1:3306/infinite?serverTimezone=UTC");
-			}
-		});
-
-		/* Building SessionFactory */
-		SessionFactory sessionFactory = configuration.buildSessionFactory(
-				new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build());
-
 		/* Obtain Session and Call Persistence Methods */
-		Session session = sessionFactory.openSession();
+		Session session = HibernateUtil.getSessionFactory().openSession();
+
+		// Insert user:
 		session.beginTransaction();
-		AccountType type = new AccountType();
 
-		type.setName("Checking");
-		type.setCreatedDate(new Date());
-		type.setLastUpdatedDate(new Date());
-		type.setCreatedBy("kevinbowersox");
-		type.setLastUpdatedBy("kevinbowersox");
+		User user = new User();
+		user.setFirstName("Rossella");
+		user.setLastName("Bozzini");
+		user.setBirthDate(getMyBirthday());
+		user.setEmailAddress("rossellabozzini@gmail.com");
+		user.setLastUpdatedDate(new Date());
+		user.setLastUpdatedBy("rossella");
+		user.setCreatedDate(new Date());
+		user.setCreatedBy("rossella");
 
-		session.save(type);
+		session.save(user);
+
 		session.getTransaction().commit();
-		session.close();
 
+//		// Modify user:
+//
+//		session.beginTransaction();
+//
+//		// Select user by id:
+//		User dbUser = (User) session.get(User.class, user.getUserId());
+//		dbUser.setFirstName("Ross");
+//
+//		session.update(dbUser);
+//		session.getTransaction().commit();
+
+		// @Formula: calculate age:
+		// Need to refresh entity:
+		session.refresh(user);
+		System.out.println(user.getFirstName() + " ha " + user.getAge() + " anni!");
+
+		session.close();
+	}
+
+	private static Date getMyBirthday() {
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.YEAR, 1973);
+		cal.set(Calendar.MONTH, 6);
+		cal.set(Calendar.DATE, 25);
+		return cal.getTime();
 	}
 }
