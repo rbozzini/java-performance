@@ -1,8 +1,11 @@
 package mflix.api.daos;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -10,328 +13,374 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.BsonField;
+import com.mongodb.client.model.BucketOptions;
+import com.mongodb.client.model.Facet;
+import com.mongodb.client.model.Field;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Sorts;
 
 @Component
 public class MovieDao extends AbstractMFlixDao {
 
-  public static String MOVIES_COLLECTION = "movies";
+	public static String MOVIES_COLLECTION = "movies";
 
-  private MongoCollection<Document> moviesCollection;
+	private MongoCollection<Document> moviesCollection;
 
-  @Autowired
-  public MovieDao(
-      MongoClient mongoClient, @Value("${spring.mongodb.database}") String databaseName) {
-    super(mongoClient, databaseName);
-    moviesCollection = db.getCollection(MOVIES_COLLECTION);
-  }
+	@Autowired
+	public MovieDao(MongoClient mongoClient, @Value("${spring.mongodb.database}") String databaseName) {
+		super(mongoClient, databaseName);
+		moviesCollection = db.getCollection(MOVIES_COLLECTION);
+	}
 
-  @SuppressWarnings("unchecked")
-  private Bson buildLookupStage() {
-    return null;
+	@SuppressWarnings("unchecked")
+	private Bson buildLookupStage() {
+		return null;
 
-  }
+	}
 
-  /**
-   * movieId needs to be a hexadecimal string value. Otherwise it won't be possible to translate to
-   * an ObjectID
-   *
-   * @param movieId - Movie object identifier
-   * @return true if valid movieId.
-   */
-  private boolean validIdValue(String movieId) {
-    //TODO> Ticket: Handling Errors - implement a way to catch a
-    //any potential exceptions thrown while validating a movie id.
-    //Check out this method's use in the method that follows.
-    return true;
-  }
+	/**
+	 * movieId needs to be a hexadecimal string value. Otherwise it won't be
+	 * possible to translate to an ObjectID
+	 *
+	 * @param movieId - Movie object identifier
+	 * @return true if valid movieId.
+	 */
+	private boolean validIdValue(String movieId) {
+		// TODO> Ticket: Handling Errors - implement a way to catch a
+		// any potential exceptions thrown while validating a movie id.
+		// Check out this method's use in the method that follows.
+		return true;
+	}
 
-  /**
-   * Gets a movie object from the database.
-   *
-   * @param movieId - Movie identifier string.
-   * @return Document object or null.
-   */
-  @SuppressWarnings("UnnecessaryLocalVariable")
-  public Document getMovie(String movieId) {
-    if (!validIdValue(movieId)) {
-      return null;
-    }
+	/**
+	 * Gets a movie object from the database.
+	 *
+	 * @param movieId - Movie identifier string.
+	 * @return Document object or null.
+	 */
+	@SuppressWarnings("UnnecessaryLocalVariable")
+	public Document getMovie(String movieId) {
+		if (!validIdValue(movieId)) {
+			return null;
+		}
 
-    List<Bson> pipeline = new ArrayList<>();
-    // match stage to find movie
-    Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
-    pipeline.add(match);
-    // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
-    // retrieved with Movies.
-    Document movie = moviesCollection.aggregate(pipeline).first();
+//		List<Bson> pipeline = new ArrayList<>();
+//		// match stage to find movie
+//		Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+//		pipeline.add(match);
+		// TODO> Ticket: Get Comments - implement the lookup stage that allows the
+		// comments to
+		// retrieved with Movies.
 
-    return movie;
-  }
+//		  from: 'comments',
+//		  let: {'id':"$_id"},
+//		  pipeline: [
+//		    {'$match' :
+//		        {'$expr' : {'$eq' : ['$movie_id', '$$id']}}
+//		    },
+//		    {
+//		      '$sort': {date: 1}
+//		    }
+//		  ],
+//		  as: 'comments'
 
-  /**
-   * Returns all movies within the defined limit and skip values using a default descending sort key
-   * `tomatoes.viewer.numReviews`
-   *
-   * @param limit - max number of returned documents.
-   * @param skip - number of documents to be skipped.
-   * @return list of documents.
-   */
-  @SuppressWarnings("UnnecessaryLocalVariable")
-  public List<Document> getMovies(int limit, int skip) {
-    String defaultSortKey = "tomatoes.viewer.numReviews";
-    List<Document> movies =
-        new ArrayList<>(getMovies(limit, skip, Sorts.descending(defaultSortKey)));
-    return movies;
-  }
+//		List<Variable<String>> vars = new ArrayList<>();
+//		Variable<String> var = new Variable<String>("id", "$_id");
+//		vars.add(var);
+//		List<Bson> lookupPipeline = new ArrayList<>();
+//		// Bson eq = new Document("$eq", Arrays.asList("movie_id", "$$id"));
+//		Bson eq = Aggregates.match(Filters.expr(Filters.eq(Arrays.asList("$movie_id", "$$id"))));
+//		Bson sort = Aggregates.sort(Sorts.ascending("date"));
+//		lookupPipeline.add(eq);
+//		lookupPipeline.add(sort);
+//
+//		Bson lookup = Aggregates.lookup("comments", vars, lookupPipeline, "comments");
+//		pipeline.add(lookup);
+//
 
-  /**
-   * Finds a limited amount of movies documents, for a given sort order.
-   *
-   * @param limit - max number of documents to be returned.
-   * @param skip - number of documents to be skipped.
-   * @param sort - result sorting criteria.
-   * @return list of documents that sorted by the defined sort criteria.
-   */
-  public List<Document> getMovies(int limit, int skip, Bson sort) {
+		List<Document> pipeline = Arrays
+				.asList(new Document("$match", new Document("_id", new ObjectId(movieId))),
+						new Document("$lookup",
+								new Document("from", "comments")
+										.append("let",
+												new Document("movie_id", "$_id"))
+										.append("pipeline", Arrays.asList(
+												new Document("$match",
+														new Document("$expr", new Document("$and",
+																Collections.singletonList(new Document("$eq",
+																		Arrays.asList("$movie_id", "$$movie_id")))))),
+												new Document("$sort", new Document("date", -1))))
+										.append("as", "comments")));
 
-    List<Document> movies = new ArrayList<>();
+		return moviesCollection.aggregate(pipeline).first();
+		// Document movie = moviesCollection.aggregate(pipeline).first();
 
-    moviesCollection
-        .find()
-        .limit(limit)
-        .skip(skip)
-        .sort(sort)
-        .iterator()
-        .forEachRemaining(movies::add);
+// debug!
+//		List<Document> commentDocs = (List<Document>) movie.get("comments");
+//		int i = 0;
+//		for (Document comment : commentDocs) {
+//			System.out.println("i = " + i + " - " + comment.get("movie_id"));
+//			i++;
+//			if (i > 9) {
+//				break;
+//			}
+//		}
 
-    return movies;
-  }
+		// return movie;
+	}
 
-  /**
-   * For a given a country, return all the movies that match that country.
-   *
-   * @param country - Country string value to be matched.
-   * @return List of matching Document objects.
-   */
-  public List<Document> getMoviesByCountry(String... country) {
+	/**
+	 * Returns all movies within the defined limit and skip values using a default
+	 * descending sort key `tomatoes.viewer.numReviews`
+	 *
+	 * @param limit - max number of returned documents.
+	 * @param skip  - number of documents to be skipped.
+	 * @return list of documents.
+	 */
+	@SuppressWarnings("UnnecessaryLocalVariable")
+	public List<Document> getMovies(int limit, int skip) {
+		String defaultSortKey = "tomatoes.viewer.numReviews";
+		List<Document> movies = new ArrayList<>(getMovies(limit, skip, Sorts.descending(defaultSortKey)));
+		return movies;
+	}
 
-    Bson queryFilter = new Document();
-    Bson projection = new Document();
-    //TODO> Ticket: Projection - implement the query and projection required by the unit test
-    List<Document> movies = new ArrayList<>();
+	/**
+	 * Finds a limited amount of movies documents, for a given sort order.
+	 *
+	 * @param limit - max number of documents to be returned.
+	 * @param skip  - number of documents to be skipped.
+	 * @param sort  - result sorting criteria.
+	 * @return list of documents that sorted by the defined sort criteria.
+	 */
+	public List<Document> getMovies(int limit, int skip, Bson sort) {
 
-    return movies;
-  }
+		List<Document> movies = new ArrayList<>();
 
-  /**
-   * This method will execute the following mongo shell query: db.movies.find({"$text": { "$search":
-   * `keywords` }}, {"score": {"$meta": "textScore"}}).sort({"score": {"$meta": "textScore"}})
-   *
-   * @param limit - integer value of number of documents to be limited to.
-   * @param skip - number of documents to be skipped.
-   * @param keywords - text matching keywords or terms
-   * @return List of query matching Document objects
-   */
-  public List<Document> getMoviesByText(int limit, int skip, String keywords) {
-    Bson textFilter = Filters.text(keywords);
-    Bson projection = Projections.metaTextScore("score");
-    Bson sort = Sorts.metaTextScore("score");
-    List<Document> movies = new ArrayList<>();
-    moviesCollection
-        .find(textFilter)
-        .projection(projection)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .iterator()
-        .forEachRemaining(movies::add);
-    return movies;
-  }
+		moviesCollection.find().limit(limit).skip(skip).sort(sort).iterator().forEachRemaining(movies::add);
 
-  /**
-   * Finds all movies that contain any of the `casts` members, sorted in descending by the `sortKey`
-   * field.
-   *
-   * @param sortKey - sort key.
-   * @param limit - number of documents to be returned.
-   * @param skip - number of documents to be skipped.
-   * @param cast - cast selector.
-   * @return List of documents sorted by sortKey that match the cast selector.
-   */
-  public List<Document> getMoviesByCast(String sortKey, int limit, int skip, String... cast) {
-    Bson castFilter = null;
-    Bson sort = null;
-    //TODO> Ticket: Subfield Text Search - implement the expected cast
-    // filter and sort
-    List<Document> movies = new ArrayList<>();
-    moviesCollection
-        .find(castFilter)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .iterator()
-        .forEachRemaining(movies::add);
-    return movies;
-  }
+		return movies;
+	}
 
-  /**
-   * Finds all movies that match the provide `genres`, sorted descending by the `sortKey` field.
-   *
-   * @param sortKey - sorting key string.
-   * @param limit - number of documents to be returned.
-   * @param skip - number of documents to be skipped
-   * @param genres - genres matching string vargs.
-   * @return List of matching Document objects.
-   */
-  public List<Document> getMoviesByGenre(String sortKey, int limit, int skip, String... genres) {
-    // query filter
-    Bson castFilter = Filters.in("genres", genres);
-    // sort key
-    Bson sort = Sorts.descending(sortKey);
-    List<Document> movies = new ArrayList<>();
-    // TODO > Ticket: Paging - implement the necessary cursor methods to support simple
-    // pagination like skip and limit in the code below
-    moviesCollection.find(castFilter).sort(sort).iterator()
-    .forEachRemaining(movies::add);
-    return movies;
-  }
+	/**
+	 * For a given a country, return all the movies that match that country.
+	 *
+	 * @param country - Country string value to be matched.
+	 * @return List of matching Document objects.
+	 */
+	public List<Document> getMoviesByCountry(String... country) {
 
-  private ArrayList<Integer> runtimeBoundaries() {
-    ArrayList<Integer> runtimeBoundaries = new ArrayList<>();
-    runtimeBoundaries.add(0);
-    runtimeBoundaries.add(60);
-    runtimeBoundaries.add(90);
-    runtimeBoundaries.add(120);
-    runtimeBoundaries.add(180);
-    return runtimeBoundaries;
-  }
+		// Si può fare in entrambi i modi.
+//		Bson queryFilter = new Document("countries", new Document("$all", Arrays.asList(country)));
+		Bson queryFilter = Filters.in("countries", country);
+		Bson projection = new Document("title", 1);
+		// TODO> Ticket: Projection - implement the query and projection required by the
+		// unit test
+		List<Document> movies = new ArrayList<>();
 
-  private ArrayList<Integer> ratingBoundaries() {
-    ArrayList<Integer> ratingBoundaries = new ArrayList<>();
-    ratingBoundaries.add(0);
-    ratingBoundaries.add(50);
-    ratingBoundaries.add(70);
-    ratingBoundaries.add(90);
-    ratingBoundaries.add(100);
-    return ratingBoundaries;
-  }
+		moviesCollection.find(queryFilter).projection(projection).into(movies);
 
-  /**
-   * This method is the java implementation of the following mongo shell aggregation pipeline {
-   * "$bucket": { "groupBy": "$runtime", "boundaries": [0, 60, 90, 120, 180], "default": "other",
-   * "output": { "count": {"$sum": 1} } } }
-   */
-  private Bson buildRuntimeBucketStage() {
+		return movies;
+	}
 
-    BucketOptions bucketOptions = new BucketOptions();
-    bucketOptions.defaultBucket("other");
-    BsonField count = new BsonField("count", new Document("$sum", 1));
-    bucketOptions.output(count);
-    return Aggregates.bucket("$runtime", runtimeBoundaries(), bucketOptions);
-  }
+	/**
+	 * This method will execute the following mongo shell query:
+	 * db.movies.find({"$text": { "$search": `keywords` }}, {"score": {"$meta":
+	 * "textScore"}}).sort({"score": {"$meta": "textScore"}})
+	 *
+	 * @param limit    - integer value of number of documents to be limited to.
+	 * @param skip     - number of documents to be skipped.
+	 * @param keywords - text matching keywords or terms
+	 * @return List of query matching Document objects
+	 */
+	public List<Document> getMoviesByText(int limit, int skip, String keywords) {
+		Bson textFilter = Filters.text(keywords);
+		Bson projection = Projections.metaTextScore("score");
+		Bson sort = Sorts.metaTextScore("score");
+		List<Document> movies = new ArrayList<>();
+		moviesCollection.find(textFilter).projection(projection).sort(sort).skip(skip).limit(limit).iterator()
+				.forEachRemaining(movies::add);
+		return movies;
+	}
 
-  /*
-  This method is the java implementation of the following mongo shell aggregation pipeline
-  {
-   "$bucket": {
-     "groupBy": "$metacritic",
-     "boundaries": [0, 50, 70, 90, 100],
-     "default": "other",
-     "output": {
-     "count": {"$sum": 1}
-     }
-    }
-   }
-   */
-  private Bson buildRatingBucketStage() {
-    BucketOptions bucketOptions = new BucketOptions();
-    bucketOptions.defaultBucket("other");
-    BsonField count = new BsonField("count", new Document("$sum", 1));
-    bucketOptions.output(count);
-    return Aggregates.bucket("$metacritic", ratingBoundaries(), bucketOptions);
-  }
+	/**
+	 * Finds all movies that contain any of the `casts` members, sorted in
+	 * descending by the `sortKey` field.
+	 *
+	 * @param sortKey - sort key.
+	 * @param limit   - number of documents to be returned.
+	 * @param skip    - number of documents to be skipped.
+	 * @param cast    - cast selector.
+	 * @return List of documents sorted by sortKey that match the cast selector.
+	 */
+	public List<Document> getMoviesByCast(String sortKey, int limit, int skip, String... cast) {
+		Bson castFilter = Filters.in("cast", cast);
+		Bson sort = Sorts.descending(sortKey);
+		// TODO> Ticket: Subfield Text Search - implement the expected cast
+		// filter and sort
+		List<Document> movies = new ArrayList<>();
+		moviesCollection.find(castFilter).sort(sort).limit(limit).skip(skip).iterator().forEachRemaining(movies::add);
+		return movies;
+	}
 
-  /**
-   * This method is the java implementation of the following mongo shell aggregation pipeline
-   * pipeline.aggregate([ {$match: {cast: {$in: ... }}}, {$sort: {tomatoes.viewer.numReviews: -1}},
-   * {$skip: ... }, {$limit: ... }, {$facet:{ runtime: {$bucket: ...}, rating: {$bucket: ...},
-   * movies: {$addFields: ...}, }} ])
-   */
-  public List<Document> getMoviesCastFaceted(int limit, int skip, String... cast) {
-    List<Document> movies = new ArrayList<>();
-    String sortKey = "tomatoes.viewer.numReviews";
-    Bson skipStage = Aggregates.skip(skip);
-    Bson matchStage = Aggregates.match(Filters.in("cast", cast));
-    Bson sortStage = Aggregates.sort(Sorts.descending(sortKey));
-    Bson limitStage = Aggregates.limit(limit);
-    Bson facetStage = buildFacetStage();
-    // Using a LinkedList to ensure insertion order
-    List<Bson> pipeline = new LinkedList<>();
+	/**
+	 * Finds all movies that match the provide `genres`, sorted descending by the
+	 * `sortKey` field.
+	 *
+	 * @param sortKey - sorting key string.
+	 * @param limit   - number of documents to be returned.
+	 * @param skip    - number of documents to be skipped
+	 * @param genres  - genres matching string vargs.
+	 * @return List of matching Document objects.
+	 */
+	public List<Document> getMoviesByGenre(String sortKey, int limit, int skip, String... genres) {
+		// query filter
+		Bson castFilter = Filters.in("genres", genres);
+		// sort key
+		Bson sort = Sorts.descending(sortKey);
+		List<Document> movies = new ArrayList<>();
+		// TODO > Ticket: Paging - implement the necessary cursor methods to support
+		// simple
+		// pagination like skip and limit in the code below
+		moviesCollection.find(castFilter).sort(sort).skip(skip).limit(limit).iterator().forEachRemaining(movies::add);
+		return movies;
+	}
 
-    // TODO > Ticket: Faceted Search - build the aggregation pipeline by adding all stages in the
-    // correct order
-    // Your job is to order the stages correctly in the pipeline.
-    // Starting with the `matchStage` add the remaining stages.
-    pipeline.add(matchStage);
+	private ArrayList<Integer> runtimeBoundaries() {
+		ArrayList<Integer> runtimeBoundaries = new ArrayList<>();
+		runtimeBoundaries.add(0);
+		runtimeBoundaries.add(60);
+		runtimeBoundaries.add(90);
+		runtimeBoundaries.add(120);
+		runtimeBoundaries.add(180);
+		return runtimeBoundaries;
+	}
 
-    moviesCollection.aggregate(pipeline).iterator().forEachRemaining(movies::add);
-    return movies;
-  }
+	private ArrayList<Integer> ratingBoundaries() {
+		ArrayList<Integer> ratingBoundaries = new ArrayList<>();
+		ratingBoundaries.add(0);
+		ratingBoundaries.add(50);
+		ratingBoundaries.add(70);
+		ratingBoundaries.add(90);
+		ratingBoundaries.add(100);
+		return ratingBoundaries;
+	}
 
-  /**
-   * This method is the java implementation of the following mongo shell aggregation pipeline
-   * pipeline.aggregate([ ..., {$facet:{ runtime: {$bucket: ...}, rating: {$bucket: ...}, movies:
-   * {$addFields: ...}, }} ])
-   *
-   * @return Bson defining the $facet stage.
-   */
-  private Bson buildFacetStage() {
+	/**
+	 * This method is the java implementation of the following mongo shell
+	 * aggregation pipeline { "$bucket": { "groupBy": "$runtime", "boundaries": [0,
+	 * 60, 90, 120, 180], "default": "other", "output": { "count": {"$sum": 1} } } }
+	 */
+	private Bson buildRuntimeBucketStage() {
 
-    return Aggregates.facet(
-        new Facet("runtime", buildRuntimeBucketStage()),
-        new Facet("rating", buildRatingBucketStage()),
-        new Facet("movies", Aggregates.addFields(new Field("title", "$title"))));
-  }
+		BucketOptions bucketOptions = new BucketOptions();
+		bucketOptions.defaultBucket("other");
+		BsonField count = new BsonField("count", new Document("$sum", 1));
+		bucketOptions.output(count);
+		return Aggregates.bucket("$runtime", runtimeBoundaries(), bucketOptions);
+	}
 
-  /**
-   * Counts the total amount of documents in the `movies` collection
-   *
-   * @return number of documents in the movies collection.
-   */
-  public long getMoviesCount() {
-    return this.moviesCollection.countDocuments();
-  }
+	/*
+	 * This method is the java implementation of the following mongo shell
+	 * aggregation pipeline { "$bucket": { "groupBy": "$metacritic", "boundaries":
+	 * [0, 50, 70, 90, 100], "default": "other", "output": { "count": {"$sum": 1} }
+	 * } }
+	 */
+	private Bson buildRatingBucketStage() {
+		BucketOptions bucketOptions = new BucketOptions();
+		bucketOptions.defaultBucket("other");
+		BsonField count = new BsonField("count", new Document("$sum", 1));
+		bucketOptions.output(count);
+		return Aggregates.bucket("$metacritic", ratingBoundaries(), bucketOptions);
+	}
 
-  /**
-   * Counts the number of documents matched by this text query
-   *
-   * @param keywords - set of keywords that match the query
-   * @return number of matching documents.
-   */
-  public long getTextSearchCount(String keywords) {
-    return this.moviesCollection.countDocuments(Filters.text(keywords));
-  }
+	/**
+	 * This method is the java implementation of the following mongo shell
+	 * aggregation pipeline pipeline.aggregate([ {$match: {cast: {$in: ... }}},
+	 * {$sort: {tomatoes.viewer.numReviews: -1}}, {$skip: ... }, {$limit: ... },
+	 * {$facet:{ runtime: {$bucket: ...}, rating: {$bucket: ...}, movies:
+	 * {$addFields: ...}, }} ])
+	 */
+	public List<Document> getMoviesCastFaceted(int limit, int skip, String... cast) {
+		List<Document> movies = new ArrayList<>();
+		String sortKey = "tomatoes.viewer.numReviews";
+		Bson skipStage = Aggregates.skip(skip);
+		Bson matchStage = Aggregates.match(Filters.in("cast", cast));
+		Bson sortStage = Aggregates.sort(Sorts.descending(sortKey));
+		Bson limitStage = Aggregates.limit(limit);
+		Bson facetStage = buildFacetStage();
+		// Using a LinkedList to ensure insertion order
+		List<Bson> pipeline = new LinkedList<>();
 
-  /**
-   * Counts the number of documents matched by this cast elements
-   *
-   * @param cast - cast string vargs.
-   * @return number of matching documents.
-   */
-  public long getCastSearchCount(String... cast) {
-    return this.moviesCollection.countDocuments(Filters.in("cast", cast));
-  }
+		// TODO > Ticket: Faceted Search - build the aggregation pipeline by adding all
+		// stages in the
+		// correct order
+		// Your job is to order the stages correctly in the pipeline.
+		// Starting with the `matchStage` add the remaining stages.
+		pipeline.add(matchStage);
+		pipeline.add(sortStage);
+		pipeline.add(skipStage);
+		pipeline.add(limitStage);
+		pipeline.add(facetStage);
 
-  /**
-   * Counts the number of documents match genres filter.
-   *
-   * @param genres - genres string vargs.
-   * @return number of matching documents.
-   */
-  public long getGenresSearchCount(String... genres) {
-    return this.moviesCollection.countDocuments(Filters.in("genres", genres));
-  }
+		moviesCollection.aggregate(pipeline).iterator().forEachRemaining(movies::add);
+		return movies;
+	}
+
+	/**
+	 * This method is the java implementation of the following mongo shell
+	 * aggregation pipeline pipeline.aggregate([ ..., {$facet:{ runtime: {$bucket:
+	 * ...}, rating: {$bucket: ...}, movies: {$addFields: ...}, }} ])
+	 *
+	 * @return Bson defining the $facet stage.
+	 */
+	private Bson buildFacetStage() {
+
+		return Aggregates.facet(new Facet("runtime", buildRuntimeBucketStage()),
+				new Facet("rating", buildRatingBucketStage()),
+				new Facet("movies", Aggregates.addFields(new Field("title", "$title"))));
+	}
+
+	/**
+	 * Counts the total amount of documents in the `movies` collection
+	 *
+	 * @return number of documents in the movies collection.
+	 */
+	public long getMoviesCount() {
+		return this.moviesCollection.countDocuments();
+	}
+
+	/**
+	 * Counts the number of documents matched by this text query
+	 *
+	 * @param keywords - set of keywords that match the query
+	 * @return number of matching documents.
+	 */
+	public long getTextSearchCount(String keywords) {
+		return this.moviesCollection.countDocuments(Filters.text(keywords));
+	}
+
+	/**
+	 * Counts the number of documents matched by this cast elements
+	 *
+	 * @param cast - cast string vargs.
+	 * @return number of matching documents.
+	 */
+	public long getCastSearchCount(String... cast) {
+		return this.moviesCollection.countDocuments(Filters.in("cast", cast));
+	}
+
+	/**
+	 * Counts the number of documents match genres filter.
+	 *
+	 * @param genres - genres string vargs.
+	 * @return number of matching documents.
+	 */
+	public long getGenresSearchCount(String... genres) {
+		return this.moviesCollection.countDocuments(Filters.in("genres", genres));
+	}
 }
