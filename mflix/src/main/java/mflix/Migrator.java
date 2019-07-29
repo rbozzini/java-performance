@@ -45,10 +45,8 @@ public class Migrator {
 			// TODO> Ticket: Migration - define the UpdateOneModel object for
 			// the rating type cleanup.
 			//return new UpdateOneModel<Document>(new Document("$eq", new Document("_id", doc.getObjectId("_id"))), new Document());
-			if (rating != 0) {
-				return new UpdateOneModel<>(Filters.eq("_id", doc.getObjectId("_id")),
+			return new UpdateOneModel<>(Filters.eq("_id", doc.getObjectId("_id")),
 						Updates.set("imdb.rating", rating));
-			}
 
 		} catch (NumberFormatException e) {
 			System.out.println(MessageFormat.format("Could not parse {0} into " + "number: {1}",
@@ -100,11 +98,11 @@ public class Migrator {
 		String mongoUri = "mongodb+srv://m220student:m220password@mflix-fwx3w.mongodb.net/test";
 
 		// instantiate database and collection objects
-		MongoDatabase mflix = MongoClients.create(mongoUri).getDatabase("sample_umflix");
+		MongoDatabase mflix = MongoClients.create(mongoUri).getDatabase("sample_mflix");
 		MongoCollection<Document> movies = mflix.getCollection("movies");
 
 		//Bson dateStringFilter = Filters.type("lastupdated", "string");
-		Bson dateStringFilter = Filters.and( Filters.exists("lastupdated"), Filters.type("lastupdated", "string") );
+		Bson dateStringFilter = Filters.and(Filters.exists("lastupdated"), Filters.type("lastupdated", "string"));
 		String datePattern = "yyyy-MM-dd hh:mm:ss";
 		// TODO> Ticket: Migration - create a query filter that finds all
 		// documents that are required to be updated and the correct date
