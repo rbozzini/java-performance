@@ -20,8 +20,10 @@ import org.springframework.context.annotation.Configuration;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 import mflix.api.models.Session;
 import mflix.api.models.User;
@@ -60,8 +62,24 @@ public class UserDao extends AbstractMFlixDao {
 	public boolean addUser(User user) {
 		// TODO > Ticket: Durable Writes - you might want to use a more durable write
 		// concern here!
+		
+		try {
+			User existingUser = getUser(user.getEmail());
+			if (existingUser != null) {
+				return false;
+			}
+		} catch (Exception e) {
+		}
 		usersCollection.insertOne(user);
 		return true;
+		
+//	    UpdateOptions options = new UpdateOptions();
+//	    options.upsert(true);
+//
+//	    Bson filter = Filters.eq("email", user.getEmail());
+//	    // and adding those options to the update method.
+//	    usersCollection.updateOne(filter, new Document("$set", user), options);
+
 		// TODO > Ticket: Handling Errors - make sure to only add new users
 		// and not users that already exist.
 
@@ -78,6 +96,16 @@ public class UserDao extends AbstractMFlixDao {
 		// TODO> Ticket: User Management - implement the method that allows session
 		// information to be
 		// stored in it's designated collection.
+		
+		try {
+			Session existingUserSession = getUserSession(userId);
+			if (existingUserSession != null) {
+				return true;
+			}
+		} catch (Exception e) {
+			
+		}
+		
 		Session userSession = new Session();
 		userSession.setUserId(userId);
 		userSession.setJwt(jwt);
